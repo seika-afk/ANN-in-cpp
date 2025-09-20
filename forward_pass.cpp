@@ -4,7 +4,9 @@
 #include <ctime>
 #include "../Core-Foundations/TensorClass/neuroBlock.h"
 #include "../Core-Foundations/Activation_Functions/AcFn.h"
+#include "loss_fns/Losses.h"
 #include <cmath>
+
 using namespace std;
 class ANN{
 
@@ -12,6 +14,7 @@ class ANN{
 	string ac_fn;
 	vector<float> inputs;
 	AcFn af;
+	Losses lf;
 
 
 //############################### INITIALIZATION METHODS
@@ -70,7 +73,7 @@ return weight;
 
 
 
-	void neuron(int input_shape,int output_shape,string weight_init_method,string ac_fn)
+	void neuron(int input_shape,float yi,int output_shape,string weight_init_method,string ac_fn,string loss_fn)
 {
 
 	int n_out=output_shape;
@@ -117,6 +120,8 @@ activation=af.sigmoid(z);
 
 		}
 		cout<<"FInal Activation"<<activation<<endl;
+//#### LOSS CALC
+		cout<<"Loss : "<<this->calcLoss(loss_fn,yi,activation)<<endl;
 
 
 
@@ -124,7 +129,21 @@ activation=af.sigmoid(z);
 
 }
 
-	
+	float calcLoss(string loss_fn,float yi,float xi){
+		if (loss_fn=="mae"){
+   			return lf.mae(yi,xi);
+		}
+		else if (loss_fn=="bce") {
+				return lf.bce(yi,xi);
+		}
+		else{
+cout<<"Unknown Loss.";
+return 0.0;
+		}
+		
+
+		
+	}	
 
 
 // ################### END OF CLASS
@@ -148,7 +167,8 @@ vector<float> inputs ={1,2,3};
 // demoing Z
 ANN ann;
 ann.input_layer(inputs);
-ann.neuron(3,1,"he","relu");
+ann.neuron(3,0.7,1,"he","relu","mae");
+
 
 return 0;
 }
