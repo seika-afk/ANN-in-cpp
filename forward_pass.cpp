@@ -146,6 +146,13 @@ return 0.0;
 	}	
 
 
+	float grad(string loss, string ac_fn ){
+
+		
+
+	}
+
+
 // ################### END OF CLASS
 };
 
