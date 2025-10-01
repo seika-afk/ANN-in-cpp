@@ -1,18 +1,15 @@
-#include <iostream>
+#include "Gradients.h"
 #include <algorithm>
 #include <cmath>
+
 using namespace std;
-class grads{
-
-
-	public:
 
 
 
 ///############## GRADIENT FOR LOSSES
 
 //MAE LOSS
-		float mae_grad(float y,float a){
+		float Gradients::mae_grad(float y,float a){
 			// FOR WHY IS IT USED : CHECK MY NOTES (if u can understand it)
 			if (y>a){
 				return -1.0f;
@@ -28,7 +25,7 @@ class grads{
 
 
 //BCE LOSS
-		float bce_grad(float y, float a){
+		float Gradients::bce_grad(float y, float a){
 		a=clamp(a,1e-7f,1.0f-1e-7f);
 
 		return (((1-y)/(1-a))-(y/a));
@@ -38,16 +35,17 @@ class grads{
 
 
 
+
 //######################## Gradients for Activation Functions
 	
 //#### RELU
-		float relu_grad(float x){
+		float Gradients::relu_grad(float x){
 
 		return (x<= 0? 0.0f :1.0f );
 
 	}
 //#### SIGMOID :
-		float sigmoid_grad(float x){
+		float Gradients::sigmoid_grad(float x){
 
 		return exp(-x)/pow((1+(exp(-x))),2);
 
@@ -58,12 +56,4 @@ class grads{
 
 
 
-};
 
-
-
-int main(){
-
-
-return 0;
-}
