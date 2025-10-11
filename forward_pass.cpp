@@ -5,6 +5,7 @@
 #include "../Core-Foundations/TensorClass/neuroBlock.h"
 #include "../Core-Foundations/Activation_Functions/AcFn.h"
 #include "loss_fns/Losses.h"
+#include "gradients/Gradients.h"
 #include <cmath>
 
 using namespace std;
@@ -15,6 +16,7 @@ class ANN{
 	vector<float> inputs;
 	AcFn af;
 	Losses lf;
+	Gradients gd;
 
 
 //############################### INITIALIZATION METHODS
@@ -73,7 +75,7 @@ return weight;
 
 
 
-	void neuron(int input_shape,float yi,int output_shape,string weight_init_method,string ac_fn,string loss_fn)
+	void neuron(int input_shape,float yi,int output_shape,string weight_init_method,string ac_fn,string loss_fn,float lr)
 {
 
 	int n_out=output_shape;
@@ -123,6 +125,16 @@ activation=af.sigmoid(z);
 //#### LOSS CALC
 		cout<<"Loss : "<<this->calcLoss(loss_fn,yi,activation)<<endl;
 
+		cout<<"Performing Weight Updation"<<endl;
+// for now just taking for 1 ijnput: Trial
+		float gradient=grad(loss_fn,ac_fn,yi,activation,inputs[0]);
+		
+		//using formula => wnew=wold-n*gradient
+	
+		float updated_weight= weights[0]-((lr)*(gradient));
+
+		cout<<"UPdating Weight from : "<<weights[0]<<"to "<<updated_weight <<endl;
+
 
 
 
@@ -145,11 +157,36 @@ return 0.0;
 		
 	}	
 
+//######################### CALCULATE GRADIENT
 
-	float grad(string loss, string ac_fn ){
+	float grad(string loss, string ac_fn,float y_loss,float a,float xi ){
+	float loss_gradient=0;
+	float ac_gradient=0;
+	float final_gradient=0;
+	
+//calculating grad of loss
+	if (loss=="mae"){
+		loss_gradient=gd.mae_grad(y_loss,a);
 
+	}
+	if (loss=="bce"){
+
+		loss_gradient=gd.bce_grad(y_loss,a);
+	}
+
+//GRadient for activation
+	if (ac_fn=="relu"){
+ac_gradient=gd.relu_grad(a);
 		
+	}
+	if(ac_fn=="sigmoid"){
+ac_gradient=gd.sigmoid_grad(a);
+	}
+	final_gradient=loss_gradient*ac_gradient*xi;
 
+	return final_gradient;
+	
+	
 	}
 
 
@@ -174,7 +211,7 @@ vector<float> inputs ={1,2,3};
 // demoing Z
 ANN ann;
 ann.input_layer(inputs);
-ann.neuron(3,0.7,1,"he","relu","mae");
+ann.neuron(3,0.7,1,"he","relu","mae",0.01);
 
 
 return 0;
