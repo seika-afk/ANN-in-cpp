@@ -1,4 +1,5 @@
 #include <iostream>
+#include <variant>
 #include <vector>
 #include <cstdlib>
 #include <ctime>
@@ -7,8 +8,9 @@
 #include "loss_fns/Losses.h"
 #include "gradients/Gradients.h"
 #include <cmath>
-
+#include <map>
 using namespace std;
+
 class ANN{
 
 	public :
@@ -17,10 +19,21 @@ class ANN{
 	AcFn af;
 	Losses lf;
 	Gradients gd;
+	map<string,variant<string,int,float>> layer_configs;
+	vector<map<string,variant<string,int,float>>> h_layers;
+
+// ### for storing weights for each neuron in each hidden layer  and its output 
+	vector <vector<variant<float,string>>> outputs;
+
+	vector <vector<variant<float,string>>> weights;
+
+
 
 
 //############################### INITIALIZATION METHODS
-
+	void add_input(vector<float> single_line_input){
+	inputs=single_line_input;
+	}
 
 
 //########################### XAVIER : for tanh and sigmoid
@@ -75,6 +88,51 @@ return weight;
 
 
 
+//########################### FN TO ADD LAYER : fn to ann layers and fn to add final _layer
+
+
+	//### FN TO ADD ANN LAYER
+
+	void add_layer(int input_shape,int num_neurons,string weight_init_method,string ac_fn ){
+		// setting configs
+		this->layer_configs= {{"input_shape",input_shape},{"num_neurons",num_neurons},{"weight_init_method",weight_init_method},{"ac_fn",ac_fn}};
+		this->h_layers.push_back(layer_configs);
+		cout<<"New Hidden Layer Added !"<<endl;
+		
+	
+
+		}
+
+//FN TO ADD ANN_LAST_LAYER
+	void add_layer(int input_shape,int num_neurons,string weight_init_method,string ac_fn,string loss_fn,float lr){
+		// setting configs
+		this->layer_configs= {{"input_shape",input_shape},{"num_neurons",num_neurons},{"weight_init_method",weight_init_method},{"ac_fn",ac_fn},{"loss_fn",loss_fn},{"lr",lr}};
+		this->h_layers.push_back(layer_configs);
+		cout<<"Final  Hidden Layer Added !"<<endl;
+
+
+
+		}
+
+
+	void run_layer(){
+	//int i =0;
+	//for (auto h :this->h_layers){
+		//cout <<"Hidden Layer "<<i<<" : "<<endl;
+		//cout<<"---------------------"<<endl;
+		//	for (auto & [key,val] : h){
+		//		cout<<key<<" : ";
+		//		std::visit([](auto&&arg){cout<<arg;},val);
+		//		cout<<endl;
+		//	}
+		//	i=i+1;
+		//}
+	
+	
+	}
+
+
+//############################## SAMPLE NEURON
 	void neuron(int input_shape,float yi,int output_shape,string weight_init_method,string ac_fn,string loss_fn,float lr)
 {
 
@@ -209,10 +267,37 @@ vector<float> inputs ={1,2,3};
 
 
 // demoing Z
-ANN ann;
-ann.input_layer(inputs);
-ann.neuron(3,0.7,1,"he","relu","mae",0.01);
+//ANN ann;
+//ann.input_layer(inputs);
+//ann.neuron(3,0.7,1,"he","relu","mae",0.01);
 
+// ##### HOW I WANT IT TO LOOK LIKE:
+
+ANN ann;
+//ann.input_layer(inputs); // inputs being an array of features of first row
+//ann.hidden_layer(input_shape,number_of_neurons,weight_init,activation_fn)
+//ann.hidden_layer(input_shape_of_Previous,number of neurons ,weight init method, activation fn)
+//ann.final_node(input_shape,number of possibility , weght init , activation fn,loss_fn,lr)
+
+
+// for normal adding layer: input_shape(basically if input ,just input size[num of features], else the num of neurons in prev hidden layer)
+// input_shape | number of neurons | weight_init | ac_fn
+
+// if at last neuron : input_shape | number of neurons | weight_init | ac_fn | loss_fn | learning rate
+
+
+
+//for now input :
+
+vector<float> inputs ={18,2007};
+
+ann.add_input(inputs)
+ann.add_layer(3,2,"he","relu");
+ann.add_layer(2,3,"he","relu");
+ann.add_layer(3,1,"he","relu");
+//tobe used for back propogation ann.add_layer(3,1,"he","relu","mae",0.1);
+
+ann.run_layer();
 
 return 0;
 }
