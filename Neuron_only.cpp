@@ -25,7 +25,7 @@ class ANN{
 // ### for storing weights for each neuron in each hidden layer  and its output 
 	vector <vector<variant<float,string>>> outputs;
 
-	vector <vector<float>> weights;
+	vector <vector<variant<float,string>>> weights;
 
 
 
@@ -115,52 +115,6 @@ return weight;
 		}
 
 
-
-//################# WEIGHT INIT METHOD
-
-	void set_weights(map<string,variant<string,int,float>> layer_configs,int max_neuron){
-
-		// run a loop to run till max_neuron times ,and if it reaches more than current layers number :
-		// make it initialize weights  : => rows=>hidden layer , cols= neurons
-	
-	vector<float> to_be_stored;
-	//params for layer_confi
-	int num_neurons=get<int>(layer_configs["num_neurons"]);
-	int n_in= get<int>(layer_configs["input_shape"]);
-	int n_out= get<int>(layer_configs["num_neurons"]);
-	string method=get<string>(layer_configs["weight_init_method"]);
-	for (int i=0 ;i<num_neurons; i++){
-		
-		to_be_stored.push_back(give_weight(method,n_in,n_out));
-	
-	}
-	//for (int j =num_neurons;j<max_neuron;j++){
-	//to_be_stored.push_back(NAN);
-
-	//}
-	this->weights.push_back(to_be_stored);
-
-
-
-
-
-
-	}
-	float give_weight(string weight_init_method,int n_in,int n_out){
-
-			if (weight_init_method=="xavier"){
-			return(xavier(n_in,n_out));
-			}
-			else{
-		return(he(n_in));
-
-
-			}
-
-
-
-	}
-
 	void run_layer(){
 	//int i =0;
 	//for (auto h :this->h_layers){
@@ -173,42 +127,15 @@ return weight;
 		//	}
 		//	i=i+1;
 		//}
+		//
+// first setting weights of each neuron
+
+		
+
+
 	
-	//set weights
-	//function to set weight for each neuron in each layer
-	
-	int max_neurons=4;
-	for (auto h: this->h_layers){
-	
-		set_weights(h,max_neurons) ;//pass h_layers from here , all of them in loop
 	}
 
-	// run each layer with input in a loop
-	//run_hidden_layer();
-	
-	
-//printing all weights:
-	for (int i=0;i<this->weights.size();i++){
-	cout<<"----------------"<<endl;
-	cout<<"Row : "<<i<<endl;
-for(int j=0;j<this->weights[i].size();j++){
-
-	cout<<weights[i][j]<<"  ";
-
-}
-cout<<endl;
-	}
-	
-
-	}
-	void run_hidden_layer(map<string,variant<string,int,float>> layer_configs,int max_neuron){
-// todo
-// in this layer
-// - run each neuron to number of neurons, take previous all input and do the calc part in it . 
-// - produce output
-// - store that output
-
-	}
 
 //############################## SAMPLE NEURON
 	void neuron(int input_shape,float yi,int output_shape,string weight_init_method,string ac_fn,string loss_fn,float lr)
@@ -331,7 +258,7 @@ ac_gradient=gd.sigmoid_grad(a);
 
 int main(){
 
-//vector<float> inputs ={1,2,3};
+vector<float> inputs ={1,2,3};
 
 
 //xavier init
@@ -345,13 +272,13 @@ int main(){
 
 
 // demoing Z
-//ANN ann;
-//ann.input_layer(inputs);
-//ann.neuron(3,0.7,1,"he","relu","mae",0.01);
+ANN ann;
+ann.input_layer(inputs);
+ann.neuron(3,0.7,1,"he","relu","mae",0.01);
 
 // ##### HOW I WANT IT TO LOOK LIKE:
 
-ANN ann;
+//ANN ann;
 //ann.input_layer(inputs); // inputs being an array of features of first row
 //ann.hidden_layer(input_shape,number_of_neurons,weight_init,activation_fn)
 //ann.hidden_layer(input_shape_of_Previous,number of neurons ,weight init method, activation fn)
@@ -367,18 +294,19 @@ ANN ann;
 
 //for now input :
 
-vector<float> inputs ={18,2007};
+//vector<float> inputs ={18,2007};
 
-ann.add_input(inputs);
-ann.add_layer(3,2,"he","relu");
-ann.add_layer(2,3,"he","relu");
-ann.add_layer(3,1,"he","relu");
+//ann.add_input(inputs)
+//ann.add_layer(3,2,"he","relu");
+//ann.add_layer(2,3,"he","relu");
+//ann.add_layer(3,1,"he","relu");
 //tobe used for back propogation ann.add_layer(3,1,"he","relu","mae",0.1);
 
-ann.run_layer();
+//ann.run_layer();
 
 return 0;
 }
+
 
 
 
