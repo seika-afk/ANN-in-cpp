@@ -128,8 +128,9 @@ return weight;
 	int num_neurons=get<int>(layer_configs["num_neurons"]);
 	int n_in= get<int>(layer_configs["input_shape"]);
 	int n_out= get<int>(layer_configs["num_neurons"]);
+	int input_shape=get<int>(layer_configs["input_shape"]);
 	string method=get<string>(layer_configs["weight_init_method"]);
-	for (int i=0 ;i<num_neurons; i++){
+	for (int i=0 ;i<num_neurons*input_shape; i++){
 		
 		to_be_stored.push_back(give_weight(method,n_in,n_out));
 	
@@ -138,6 +139,7 @@ return weight;
 	//to_be_stored.push_back(NAN);
 
 	//}
+	to_be_stored.push_back(0);//appended bias at ends of weights
 	this->weights.push_back(to_be_stored);
 
 
@@ -181,6 +183,7 @@ return weight;
 	for (auto h: this->h_layers){
 	
 		set_weights(h,max_neurons) ;//pass h_layers from here , all of them in loop
+		
 	}
 
 	// run each layer with input in a loop
@@ -190,7 +193,7 @@ return weight;
 //printing all weights:
 	for (int i=0;i<this->weights.size();i++){
 	cout<<"----------------"<<endl;
-	cout<<"Row : "<<i<<endl;
+	cout<<"Layer : "<<i<<endl;
 for(int j=0;j<this->weights[i].size();j++){
 
 	cout<<weights[i][j]<<"  ";
@@ -198,15 +201,54 @@ for(int j=0;j<this->weights[i].size();j++){
 }
 cout<<endl;
 	}
+
+run_hidden_layer(this->h_layers[0]);
 	
 
 	}
-	void run_hidden_layer(map<string,variant<string,int,float>> layer_configs,int max_neuron){
+	void run_hidden_layer(map<string,variant<string,int,float>> h_layer){
 // todo
 // in this layer
 // - run each neuron to number of neurons, take previous all input and do the calc part in it . 
 // - produce output
 // - store that output
+	int neurons=std::get<int>(h_layer["num_neurons"]);
+	for (int i=0 ; i< neurons;i++){
+	cout<<"Neuron:  "<<i<<endl;
+	}
+
+// just testing for first layer:
+	string ac=get<string>(h_layers[0]["ac_fn"]);
+	vector<float> weight_1neuron(this->weights[0].begin(), this->weights[0].begin() + inputs.size());
+
+	run_neuron(this->inputs,ac,weight_1neuron,this->weights[0].back());
+
+	}
+
+
+	void run_neuron(vector<float> inputs,string ac_fn,vector<float> weight_,float bias){
+	
+	float z=0.0;
+
+	//calculating weighted sumz
+	for (int i =0; i<inputs.size();i++){
+  			z+=inputs[i]* weight_[i];
+
+		} 
+		z=z+bias;
+		cout<<"Weighted Sum is : "<<z<<endl;
+	//calculating activation fn
+
+	float activation;
+		// Applying activation fn 
+		if (ac_fn =="relu"){
+		activation=af.ReLU(z);}
+		else{
+activation=af.sigmoid(z);
+
+		}
+		cout<<"FInal Activation"<<activation<<endl;
+
 
 	}
 
@@ -370,7 +412,7 @@ ANN ann;
 vector<float> inputs ={18,2007};
 
 ann.add_input(inputs);
-ann.add_layer(3,2,"he","relu");
+ann.add_layer(2,2,"he","relu");
 ann.add_layer(2,3,"he","relu");
 ann.add_layer(3,1,"he","relu");
 //tobe used for back propogation ann.add_layer(3,1,"he","relu","mae",0.1);
