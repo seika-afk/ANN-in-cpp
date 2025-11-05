@@ -24,6 +24,7 @@ class ANN{
 
 // ### for storing weights for each neuron in each hidden layer  and its output 
 	vector <vector<variant<float,string>>> outputs;
+	vector <float> biases;
 
 	vector <vector<float>> weights;
 
@@ -139,7 +140,7 @@ return weight;
 	//to_be_stored.push_back(NAN);
 
 	//}
-	to_be_stored.push_back(0);//appended bias at ends of weights
+	//appended bias at ends of weights
 	this->weights.push_back(to_be_stored);
 
 
@@ -185,6 +186,9 @@ return weight;
 		set_weights(h,max_neurons) ;//pass h_layers from here , all of them in loop
 		
 	}
+	for(auto h : this->h_layers){
+this->biases.push_back(0);
+	}
 
 	// run each layer with input in a loop
 	//run_hidden_layer();
@@ -202,31 +206,74 @@ for(int j=0;j<this->weights[i].size();j++){
 cout<<endl;
 	}
 
-run_hidden_layer(this->h_layers[0]);
-	
+run_hidden_layer(this->h_layers[0],0);
+	//here 0 is index of layer , which layer is working to use its weights
 
 	}
-	void run_hidden_layer(map<string,variant<string,int,float>> h_layer){
+	void run_hidden_layer(map<string,variant<string,int,float>> h_layer,int ind_layer){
 // todo
 // in this layer
 // - run each neuron to number of neurons, take previous all input and do the calc part in it . 
 // - produce output
 // - store that output
+
+
+//imagining -> [1,2,3,4] -> [1,2],[3,4]-> we need a fn to divide a array into parts acc bby dividence
+//running all neutrons from the current layer
+
+	
+	//this part will be dynamic ,that is weights
+	
+	//vector<float> weight_1neuron(this->weights[0].begin(), this->weights[0].begin() + inputs.size());
+//cout<<"performing partition of the wieghts and showing :"<<endl;
+//	vector<vector<float>> res= part_weights(weights[1],2);
+//	for(int i =0; i<res.size();i++){
+//		for (auto h: res[i]){
+//cout<<h<<endl;
+//		}
+//		cout<<"for another neutron :-----------"<<endl;
+		
+
+//	}
 	int neurons=std::get<int>(h_layer["num_neurons"]);
-	for (int i=0 ; i< neurons;i++){
-	cout<<"Neuron:  "<<i<<endl;
+	string ac=get<string>(h_layer["ac_fn"]);
+
+
+	int input_shape=get<int>(h_layer["input_shape"]);
+vector<vector<float>> neurons_weights=part_weights(weights[ind_layer],input_shape,ind_layer);
+
+for (int i =0;i<neurons_weights.size();i++){
+float a=run_neuron(this->inputs,ac,neurons_weights[i],this->biases[ind_layer]);
+cout<<a<<endl;
+}
+
+
+
+//endoffunction
 	}
 
-// just testing for first layer:
-	string ac=get<string>(h_layers[0]["ac_fn"]);
-	vector<float> weight_1neuron(this->weights[0].begin(), this->weights[0].begin() + inputs.size());
+	vector<vector<float>> part_weights(vector<float> weight_part,int parts,int ind_layer){
+		vector<vector<float>> res ;
+			int to_be=weight_part.size()/parts;
+		int k=0;
+			for (int i =0; i<parts;i++){
+				vector<float> not_res;
+					for (int k=0;k<to_be;k++){
 
-	run_neuron(this->inputs,ac,weight_1neuron,this->weights[0].back());
+						not_res.push_back(weight_part[i*to_be+k]);
+				
+					}
+					res.push_back(not_res);
+			}
+
+			return res;
+
 
 	}
+		
 
 
-	void run_neuron(vector<float> inputs,string ac_fn,vector<float> weight_,float bias){
+	float run_neuron(vector<float> inputs,string ac_fn,vector<float> weight_,float bias){
 	
 	float z=0.0;
 
@@ -247,7 +294,7 @@ run_hidden_layer(this->h_layers[0]);
 activation=af.sigmoid(z);
 
 		}
-		cout<<"FInal Activation"<<activation<<endl;
+		return activation;
 
 
 	}
