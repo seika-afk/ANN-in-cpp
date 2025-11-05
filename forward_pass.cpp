@@ -23,7 +23,7 @@ class ANN{
 	vector<map<string,variant<string,int,float>>> h_layers;
 
 // ### for storing weights for each neuron in each hidden layer  and its output 
-	vector <vector<variant<float,string>>> outputs;
+	vector <vector<float>> activations_;
 	vector <float> biases;
 
 	vector <vector<float>> weights;
@@ -242,12 +242,15 @@ run_hidden_layer(this->h_layers[0],0);
 	int input_shape=get<int>(h_layer["input_shape"]);
 vector<vector<float>> neurons_weights=part_weights(weights[ind_layer],input_shape,ind_layer);
 
+vector<float> activations_layer;
 for (int i =0;i<neurons_weights.size();i++){
 float a=run_neuron(this->inputs,ac,neurons_weights[i],this->biases[ind_layer]);
 cout<<a<<endl;
+activations_layer.push_back(a);
+
 }
 
-
+activations_.push_back(activations_layer);
 
 //endoffunction
 	}
@@ -456,7 +459,7 @@ ANN ann;
 
 //for now input :
 
-vector<float> inputs ={18,2007};
+vector<float> inputs ={0.2,0.9};
 
 ann.add_input(inputs);
 ann.add_layer(2,2,"he","relu");
