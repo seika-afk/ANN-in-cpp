@@ -164,7 +164,7 @@ return weight;
 
 	}
 
-	void run_layer(){
+	void run_layer(string loss_fn,float yi){
 	//int i =0;
 	//for (auto h :this->h_layers){
 		//cout <<"Hidden Layer "<<i<<" : "<<endl;
@@ -203,8 +203,11 @@ for(int j=0;j<this->weights[i].size();j++){
 	cout<<weights[i][j]<<"  ";
 
 }
-cout<<endl;
-	}
+
+//calculating loss
+
+
+}
 
 
 //this is mandatory utilizing the first layer
@@ -227,6 +230,14 @@ cout<<aa<<endl;
 	}
 }
 //cout << activations_[0].back()<<endl;
+
+
+
+	float loss = calcLoss(loss_fn,yi,activations_.back().back());
+	cout<<"Loss :  "<<loss;
+
+
+
 
 //end of fn
 }
@@ -487,7 +498,7 @@ ann.add_layer(2,3,"he","relu");
 ann.add_layer(3,1,"he","relu");
 //tobe used for back propogation ann.add_layer(3,1,"he","relu","mae",0.1);
 
-ann.run_layer();
+ann.run_layer("mae",0.1);
 
 return 0;
 }
