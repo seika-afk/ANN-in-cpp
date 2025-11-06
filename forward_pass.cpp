@@ -10,7 +10,7 @@
 #include <cmath>
 #include <map>
 using namespace std;
-
+//
 class ANN{
 
 	public :
@@ -98,7 +98,7 @@ return weight;
 		// setting configs
 		this->layer_configs= {{"input_shape",input_shape},{"num_neurons",num_neurons},{"weight_init_method",weight_init_method},{"ac_fn",ac_fn}};
 		this->h_layers.push_back(layer_configs);
-		cout<<"New Hidden Layer Added !"<<endl;
+		//cout<<"New Hidden Layer Added !"<<endl;
 		
 	
 
@@ -206,10 +206,30 @@ for(int j=0;j<this->weights[i].size();j++){
 cout<<endl;
 	}
 
+
+//this is mandatory utilizing the first layer
 run_hidden_layer(this->h_layers[0],0);
 	//here 0 is index of layer , which layer is working to use its weights
 
+
+//NOw we need for all layers ,other than last , for output, where loss will be calc
+
+
+run_hidden_layer(this-> h_layers[1],1);
+run_hidden_layer(this-> h_layers[2],2);
+
+
+for(auto a:activations_){
+	cout<<"New layer"<<endl;
+	for(auto aa:a){
+cout<<aa<<endl;
+
 	}
+}
+//cout << activations_[0].back()<<endl;
+
+//end of fn
+}
 	void run_hidden_layer(map<string,variant<string,int,float>> h_layer,int ind_layer){
 // todo
 // in this layer
@@ -240,12 +260,21 @@ run_hidden_layer(this->h_layers[0],0);
 
 
 	int input_shape=get<int>(h_layer["input_shape"]);
-vector<vector<float>> neurons_weights=part_weights(weights[ind_layer],input_shape,ind_layer);
+
+vector<vector<float>> neurons_weights = part_weights(weights[ind_layer], neurons, input_shape);
+
 
 vector<float> activations_layer;
 for (int i =0;i<neurons_weights.size();i++){
-float a=run_neuron(this->inputs,ac,neurons_weights[i],this->biases[ind_layer]);
-cout<<a<<endl;
+float a;
+if (ind_layer==0){
+	a=run_neuron(this->inputs,ac,neurons_weights[i],this->biases[ind_layer]);
+//cout<<a<<endl;
+}
+else{
+a = run_neuron(activations_.back(),ac,neurons_weights[i],this->biases[ind_layer]);
+//cout<<"heh";
+}
 activations_layer.push_back(a);
 
 }
@@ -254,27 +283,18 @@ activations_.push_back(activations_layer);
 
 //endoffunction
 	}
-
-	vector<vector<float>> part_weights(vector<float> weight_part,int parts,int ind_layer){
-		vector<vector<float>> res ;
-			int to_be=weight_part.size()/parts;
-		int k=0;
-			for (int i =0; i<parts;i++){
-				vector<float> not_res;
-					for (int k=0;k<to_be;k++){
-
-						not_res.push_back(weight_part[i*to_be+k]);
-				
-					}
-					res.push_back(not_res);
-			}
-
-			return res;
-
-
-	}
-		
-
+vector<vector<float>> part_weights(vector<float> weight_part, int num_neurons, int input_size) {
+    vector<vector<float>> res;
+    int k = 0;
+    for (int i = 0; i < num_neurons; i++) {
+        vector<float> neuron_weights;
+        for (int j = 0; j < input_size; j++) {
+            neuron_weights.push_back(weight_part[k++]);
+        }
+        res.push_back(neuron_weights);
+    }
+    return res;
+}
 
 	float run_neuron(vector<float> inputs,string ac_fn,vector<float> weight_,float bias){
 	
@@ -286,7 +306,7 @@ activations_.push_back(activations_layer);
 
 		} 
 		z=z+bias;
-		cout<<"Weighted Sum is : "<<z<<endl;
+		//cout<<"Weighted Sum is : "<<z<<endl;
 	//calculating activation fn
 
 	float activation;
