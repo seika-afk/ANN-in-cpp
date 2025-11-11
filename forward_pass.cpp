@@ -234,7 +234,7 @@ cout<<aa<<endl;
 
 
 	float loss = calcLoss(loss_fn,yi,activations_.back().back());
-	cout<<"Loss :  "<<loss;
+	cout<<"Loss :  "<<loss<<endl;
 
 
 
@@ -387,7 +387,10 @@ activation=af.sigmoid(z);
 		cout<<"Performing Weight Updation"<<endl;
 // for now just taking for 1 ijnput: Trial
 		float gradient=grad(loss_fn,ac_fn,yi,activation,inputs[0]);
-		
+		// yi-> true value, a-> predicted value
+		//inputs[0]-> input of that particular neuron of that layer
+		//
+		//
 		//using formula => wnew=wold-n*gradient
 	
 		float updated_weight= weights[0]-((lr)*(gradient));
