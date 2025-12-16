@@ -10,24 +10,28 @@
 #include <cmath>
 #include <map>
 using namespace std;
-//
+
 class ANN{
 
 	public :
 	string ac_fn;
 	vector<float> inputs;
+	vector<vector<float>> zs_;
+	
+
 	AcFn af;
 	Losses lf;
 	Gradients gd;
 	map<string,variant<string,int,float>> layer_configs;
 	vector<map<string,variant<string,int,float>>> h_layers;
-
+	
 // ### for storing weights for each neuron in each hidden layer  and its output 
 	vector <vector<float>> activations_;
-	vector <float> biases;
+	vector <vector<float>> biases;
 
 	vector <vector<float>> weights;
 
+	vector<vector<float>> deltas_;
 
 
 
@@ -47,13 +51,14 @@ static bool seeded = false;
         std::srand(std::time(0));   
         seeded = true;
     }
-	
+	 
     float p_limit=sqrt(6.0f/(n_in+n_out));
     float n_limit=-(p_limit);
     float weight=n_limit+ static_cast<float>(rand()) / static_cast<float>(RAND_MAX )* (p_limit - n_limit);
 	
 return weight;
 	}
+
 
 //########################## HE : for relu
 
@@ -75,6 +80,44 @@ return weight;
 	}
 
 
+
+//######################### BUILD
+void build(){
+	weights.clear();
+	biases.clear();
+
+	for (auto &layer : h_layers){
+
+	int input_shape=get<int>(layer["input_shape"]);
+	int num_neurons=get<int>(layer["num_neurons"]);
+	string method= get<string>(layer["weight_init_method"]);
+
+		vector<float> layer_weights;
+			for (int i=0; i <num_neurons*input_shape;i++){
+
+				layer_weights.push_back(
+
+						give_weight(method,input_shape,num_neurons)
+
+						);
+			}
+		weights.push_back(layer_weights);
+//bias
+		vector<float> layer_biases(num_neurons,0.0f);
+		biases.push_back(layer_biases);
+
+
+
+			}
+		
+
+
+
+			
+
+
+
+}
 
 
 
@@ -104,12 +147,14 @@ return weight;
 
 		}
 
+	
+
 //FN TO ADD ANN_LAST_LAYER
 	void add_layer(int input_shape,int num_neurons,string weight_init_method,string ac_fn,string loss_fn,float lr){
 		// setting configs
 		this->layer_configs= {{"input_shape",input_shape},{"num_neurons",num_neurons},{"weight_init_method",weight_init_method},{"ac_fn",ac_fn},{"loss_fn",loss_fn},{"lr",lr}};
 		this->h_layers.push_back(layer_configs);
-		cout<<"Final  Hidden Layer Added !"<<endl;
+	//	cout<<"Final  Hidden Layer Added !"<<endl;
 
 
 
@@ -165,7 +210,10 @@ return weight;
 	}
 
 	void run_layer(string loss_fn,float yi){
-	//int i =0;
+		activations_.clear();
+		zs_.clear();
+		deltas_.clear();
+		//int i =0;
 	//for (auto h :this->h_layers){
 		//cout <<"Hidden Layer "<<i<<" : "<<endl;
 		//cout<<"---------------------"<<endl;
@@ -180,15 +228,17 @@ return weight;
 	//set weights
 	//function to set weight for each neuron in each layer
 	
-	int max_neurons=4;
-	for (auto h: this->h_layers){
+
+		//this was for weight generation ,but now its moved to fn build
+	//int max_neurons=4;
+	//for (auto h: this->h_layers){
 	
-		set_weights(h,max_neurons) ;//pass h_layers from here , all of them in loop
+	//	set_weights(h,max_neurons) ;//pass h_layers from here , all of them in loop
 		
-	}
-	for(auto h : this->h_layers){
-this->biases.push_back(0);
-	}
+//	}
+//	for(auto h : this->h_layers){
+//this->biases.push_back(0);
+//	}
 
 	// run each layer with input in a loop
 	//run_hidden_layer();
@@ -203,24 +253,30 @@ for(int j=0;j<this->weights[i].size();j++){
 	cout<<weights[i][j]<<"  ";
 
 }
+cout<<endl;}
 
 //calculating loss
 
 
-}
+
 
 
 //this is mandatory utilizing the first layer
-run_hidden_layer(this->h_layers[0],0);
+//run_hidden_layer(this->h_layers[0],0);
 	//here 0 is index of layer , which layer is working to use its weights
 
 
 //NOw we need for all layers ,other than last , for output, where loss will be calc
 
 
-run_hidden_layer(this-> h_layers[1],1);
-run_hidden_layer(this-> h_layers[2],2);
+//run_hidden_layer(this-> h_layers[1],1);
+//run_hidden_layer(this-> h_layers[2],2);
 
+
+for(int i=0;i<h_layers.size();i++){
+
+run_hidden_layer(h_layers[i],i);
+}
 
 for(auto a:activations_){
 	cout<<"New layer"<<endl;
@@ -232,9 +288,99 @@ cout<<aa<<endl;
 //cout << activations_[0].back()<<endl;
 
 
-
 	float loss = calcLoss(loss_fn,yi,activations_.back().back());
 	cout<<"Loss :  "<<loss<<endl;
+
+
+
+	//RUNNING BACKPROPOGATION
+	string layer_loss_fn= get<string>(h_layers.back()["loss_fn"]);
+	float layer_lr= get<float>(h_layers.back()["lr"]);
+	//cout<<layer_loss_fn<<endl;
+	//cout<<layer_lr<<endl;
+	
+int L= activations_.size()-1;
+
+vector<float> delta_L;
+	float a = activations_[L][0];
+	float z= zs_[L][0];
+	
+// dL/da
+		float dL_da;
+	if (layer_loss_fn == "mae"){
+    		dL_da = gd.mae_grad(yi, a);}
+		else{
+    			dL_da = gd.bce_grad(yi, a);}
+
+// da/dz
+	string ac = get<string>(h_layers[L]["ac_fn"]);
+	float da_dz;
+	if (ac == "relu")
+    		{da_dz = gd.relu_grad(a);}
+else
+{ da_dz = gd.sigmoid_grad(a);
+}
+// delta = dL/dz
+		float delta = dL_da * da_dz;
+	delta_L.push_back(delta);
+
+	deltas_.push_back(delta_L);
+
+
+for (int l=L-1;l>=0;l--){
+vector<float> delta_layer;
+for(int i=0;i<activations_[l].size();i++){
+float sum=0.0f;
+
+for (int j=0;j<deltas_[0].size();j++){
+   sum += deltas_[0][j] * weights[l+1][j * activations_[l].size() + i];
+     
+
+}
+        string ac = get<string>(h_layers[l]["ac_fn"]);
+        float da_dz = (ac == "relu") ? gd.relu_grad(activations_[l][i])
+                                     : gd.sigmoid_grad(activations_[l][i]);
+
+
+delta_layer.push_back(sum * da_dz);
+}
+
+ deltas_.insert(deltas_.begin(), delta_layer); 
+}
+
+//########## weight updation 
+for (int l = 0; l < weights.size(); l++) {
+    for (int i = 0; i < activations_[l].size(); i++) {
+for (int j = 0; j < (l == 0 ? inputs.size() : activations_[l-1].size()); j++) {
+            float a_j = (l == 0) ? inputs[j] : activations_[l-1][j];
+        	    weights[l][i * (l == 0 ? inputs.size() : activations_[l-1].size()) + j] -= 
+            	    layer_lr * deltas_[l][i] * a_j;
+        }
+        
+	biases[l][i] -= layer_lr * deltas_[l][i];
+    }
+}
+
+
+
+
+for (const auto& vec : activations_) {
+    for (float v : vec) {
+        cout << v << " ";
+    }
+    cout << endl;
+}
+
+		//float gradient=grad(loss_fn,ac_fn,yi,activations_[0],inputs[0]);
+		// yi-> true value, a-> predicted value
+		//inputs[0]-> input of that particular neuron of that layer
+		//
+		//
+		//using formula => wnew=wold-n*gradient
+	
+		//float updated_weight= weights[0][0]-((layer_lr)*(gradient));
+
+		//cout<<"UPdating Weight from : "<<weights[0][0]<<"to "<<updated_weight <<endl;
 
 
 
@@ -242,6 +388,8 @@ cout<<aa<<endl;
 //end of fn
 }
 	void run_hidden_layer(map<string,variant<string,int,float>> h_layer,int ind_layer){
+		zs_.push_back({});
+
 // todo
 // in this layer
 // - run each neuron to number of neurons, take previous all input and do the calc part in it . 
@@ -279,11 +427,11 @@ vector<float> activations_layer;
 for (int i =0;i<neurons_weights.size();i++){
 float a;
 if (ind_layer==0){
-	a=run_neuron(this->inputs,ac,neurons_weights[i],this->biases[ind_layer]);
+	a=run_neuron(this->inputs,ac,neurons_weights[i],this->biases[ind_layer][i]);
 //cout<<a<<endl;
 }
 else{
-a = run_neuron(activations_.back(),ac,neurons_weights[i],this->biases[ind_layer]);
+a = run_neuron(activations_.back(),ac,neurons_weights[i],this->biases[ind_layer][i]);
 //cout<<"heh";
 }
 activations_layer.push_back(a);
@@ -317,9 +465,10 @@ vector<vector<float>> part_weights(vector<float> weight_part, int num_neurons, i
 
 		} 
 		z=z+bias;
+		cout<<"z="<<z<<endl;
 		//cout<<"Weighted Sum is : "<<z<<endl;
 	//calculating activation fn
-
+	zs_.back().push_back(z);
 	float activation;
 		// Applying activation fn 
 		if (ac_fn =="relu"){
@@ -328,6 +477,7 @@ vector<vector<float>> part_weights(vector<float> weight_part, int num_neurons, i
 activation=af.sigmoid(z);
 
 		}
+
 		return activation;
 
 
@@ -452,6 +602,31 @@ ac_gradient=gd.sigmoid_grad(a);
 	}
 
 
+void train(vector<vector<float>> X , vector<float>Y ,int epochs){
+// run through each epoch ->
+// add input
+// run layer
+// calc loss 
+for (int epoch=0;epoch<epochs;epoch++){
+float total_loss=0.0;
+
+for(int i =0;i<X.size();i++){
+add_input(X[i]);
+	run_layer(get<string>(h_layers.back()["loss_fn"]),Y[i]);
+total_loss+=calcLoss(get<string>(h_layers.back()["loss_fn"]),Y[i],activations_.back().back());
+
+}
+cout<<"For epoch : "<<epoch+1<< "/" << "- Loss :"<<total_loss/X.size()<<endl;
+}
+
+
+}
+
+
+
+
+
+
 // ################### END OF CLASS
 };
 
@@ -493,16 +668,19 @@ ANN ann;
 
 //for now input :
 
-vector<float> inputs ={0.2,0.9};
+//vector<float> inputs ={0.2,0.9};
+    vector<vector<float>> X = { {0.2, 0.9}, {0.5, 0.1}, {0.8, 0.7}, {0.3, 0.4} };
+    vector<float> Y = { 0.5, 0.2, 0.8, 0.4 };
 
-ann.add_input(inputs);
+//ann.add_input(inputs);
 ann.add_layer(2,2,"he","relu");
 ann.add_layer(2,3,"he","relu");
-ann.add_layer(3,1,"he","relu");
+ann.add_layer(3,1,"he","sigmoid","mae",0.1);
 //tobe used for back propogation ann.add_layer(3,1,"he","relu","mae",0.1);
+ann.build();
 
-ann.run_layer("mae",0.1);
-
+//ann.run_layer("mae",0.1);
+ann.train(X,Y,100);
 return 0;
 }
 
